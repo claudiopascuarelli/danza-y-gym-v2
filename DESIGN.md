@@ -7,7 +7,8 @@ Una administradora trabaja durante el día en recepción, alternando entre compu
 ## Dirección
 
 - Tema claro por defecto.
-- Neutros cálidos con un solo acento configurable por academia.
+- Neutros levemente azulados con celeste argentino como identidad inicial.
+- El color de marca puede personalizarse por academia en una etapa posterior.
 - Tipografía de sistema para la aplicación.
 - Navegación lateral predecible y responsive.
 - Densidad media: tablas para operación, espacios generosos para configuración.

@@ -17,8 +17,9 @@ const categories: ModuleCategory[] = ["operacion", "administracion", "servicios"
 const stepLabels = ["Identidad", "Módulos", "Reglas económicas", "Owner y acceso", "Confirmación"];
 
 export function SetupWizard() {
-  const [step, setStep] = useState(2);
+  const [step, setStep] = useState(1);
   const [academyName, setAcademyName] = useState("Mi academia");
+  const [organizationType, setOrganizationType] = useState("Academia de danza");
   const [ownerName, setOwnerName] = useState("");
   const [ownerEmail, setOwnerEmail] = useState("");
   const [rules, setRules] = useState<EconomicRules>(emptyEconomicRules);
@@ -46,7 +47,7 @@ export function SetupWizard() {
 
   function goToStep(nextStep: number) {
     setValidated(false);
-    setStep(Math.min(5, Math.max(2, nextStep)));
+    setStep(Math.min(5, Math.max(1, nextStep)));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -104,10 +105,18 @@ export function SetupWizard() {
       </aside>
 
       <section className="setup-content">
+        {step === 1 && (
+          <IdentityStep
+            academyName={academyName}
+            organizationType={organizationType}
+            setAcademyName={setAcademyName}
+            setOrganizationType={setOrganizationType}
+          />
+        )}
+
         {step === 2 && (
           <ModulesStep
             academyName={academyName}
-            setAcademyName={setAcademyName}
             selected={selected}
             visibleModules={visibleModules}
             requiredBySelection={requiredBySelection}
@@ -130,6 +139,7 @@ export function SetupWizard() {
         {step === 5 && (
           <ConfirmationStep
             academyName={academyName}
+            organizationType={organizationType}
             ownerName={ownerName}
             ownerEmail={ownerEmail}
             selectedModules={selectedModules}
@@ -144,7 +154,7 @@ export function SetupWizard() {
             <span>{internalCount} capacidades internas agregadas automáticamente</span>
           </div>
           <div className="footer-actions">
-            {step > 2 && <button type="button" className="secondary-action" onClick={() => goToStep(step - 1)}>Atrás</button>}
+            {step > 1 && <button type="button" className="secondary-action" onClick={() => goToStep(step - 1)}>Atrás</button>}
             {step === 2 && <button type="button" className="secondary-action">Guardar borrador local</button>}
             {step < 4 && (
               <button type="button" className="primary-action" onClick={() => goToStep(step + 1)}>
@@ -168,9 +178,57 @@ export function SetupWizard() {
   );
 }
 
+interface IdentityStepProps {
+  academyName: string;
+  organizationType: string;
+  setAcademyName: (value: string) => void;
+  setOrganizationType: (value: string) => void;
+}
+
+function IdentityStep({ academyName, organizationType, setAcademyName, setOrganizationType }: IdentityStepProps) {
+  return (
+    <>
+      <PageHeader
+        step="Paso 1 de 5"
+        title="Identificá esta instalación"
+        description="Estos datos personalizan la experiencia sin convertir el producto en un sistema multiempresa."
+      />
+      <div className="identity-layout">
+        <section className="form-section identity-form">
+          <div className="section-copy">
+            <h3>Datos principales</h3>
+            <p>Más adelante el owner podrá agregar su logo y ajustar la identidad visual.</p>
+          </div>
+          <div className="fields-grid">
+            <label className="form-field wide-field">
+              <span>Nombre de la instalación</span>
+              <input value={academyName} onChange={(event) => setAcademyName(event.target.value)} placeholder="Nombre de la academia" />
+            </label>
+            <label className="form-field wide-field">
+              <span>Tipo de organización</span>
+              <select value={organizationType} onChange={(event) => setOrganizationType(event.target.value)}>
+                <option>Academia de danza</option>
+                <option>Estudio</option>
+                <option>Gimnasio</option>
+                <option>Espacio de actividades</option>
+              </select>
+            </label>
+          </div>
+        </section>
+        <section className="identity-preview" aria-label="Vista previa de identidad">
+          <div className="preview-mark" aria-hidden="true">DG</div>
+          <p className="eyebrow">Instalación privada</p>
+          <h3>{academyName || "Tu organización"}</h3>
+          <p>{organizationType}</p>
+          <span>Celeste argentino · Identidad inicial</span>
+        </section>
+      </div>
+    </>
+  );
+}
+
 interface ModulesStepProps {
   academyName: string;
-  setAcademyName: (value: string) => void;
   selected: Set<ModuleKey>;
   visibleModules: typeof modules;
   requiredBySelection: Set<ModuleKey>;
@@ -178,15 +236,10 @@ interface ModulesStepProps {
   toggleModule: (key: ModuleKey) => void;
 }
 
-function ModulesStep({ academyName, setAcademyName, selected, visibleModules, requiredBySelection, lastMessage, toggleModule }: ModulesStepProps) {
+function ModulesStep({ academyName, selected, visibleModules, requiredBySelection, lastMessage, toggleModule }: ModulesStepProps) {
   return (
     <>
-      <PageHeader step="Paso 2 de 5" title={`Elegí los módulos de ${academyName || "la academia"}`} description="Las dependencias necesarias se activan automáticamente. Las recomendaciones quedan a elección del owner.">
-        <label className="academy-field">
-          <span>Nombre de la instalación</span>
-          <input value={academyName} onChange={(event) => setAcademyName(event.target.value)} />
-        </label>
-      </PageHeader>
+      <PageHeader step="Paso 2 de 5" title={`Elegí los módulos de ${academyName || "la academia"}`} description="Las dependencias necesarias se activan automáticamente. Las recomendaciones quedan a elección del owner." />
 
       <div className="system-message" role="status" aria-live="polite"><span aria-hidden="true">i</span>{lastMessage}</div>
       <div className="module-groups">
@@ -311,6 +364,7 @@ function OwnerStep({ ownerName, ownerEmail, setOwnerName, setOwnerEmail }: Owner
 
 interface ConfirmationStepProps {
   academyName: string;
+  organizationType: string;
   ownerName: string;
   ownerEmail: string;
   selectedModules: typeof modules;
@@ -318,7 +372,7 @@ interface ConfirmationStepProps {
   validated: boolean;
 }
 
-function ConfirmationStep({ academyName, ownerName, ownerEmail, selectedModules, rules, validated }: ConfirmationStepProps) {
+function ConfirmationStep({ academyName, organizationType, ownerName, ownerEmail, selectedModules, rules, validated }: ConfirmationStepProps) {
   const configuredRuleCount = Object.entries(rules).filter(([key, value]) => key !== "teacherSettlementMode" && value !== "").length;
   const arcaEnabled = selectedModules.some((module) => module.key === "arca");
   return (
@@ -326,7 +380,7 @@ function ConfirmationStep({ academyName, ownerName, ownerEmail, selectedModules,
       <PageHeader step="Paso 5 de 5" title="Revisá la configuración" description="Esta validación es local. No crea usuarios, infraestructura ni registros externos." />
       {validated && <div className="success-message" role="status"><span aria-hidden="true">✓</span><div><strong>Configuración demo validada</strong><p>La próxima etapa podrá usar esta base para construir el panel administrativo.</p></div></div>}
       <div className="confirmation-grid">
-        <section className="summary-block"><p className="eyebrow">Instalación</p><h3>{academyName || "Sin nombre"}</h3><dl><div><dt>Owner</dt><dd>{ownerName}</dd></div><div><dt>Correo</dt><dd>{ownerEmail}</dd></div><div><dt>Acceso</dt><dd>Privado, por invitación</dd></div></dl></section>
+        <section className="summary-block"><p className="eyebrow">Instalación</p><h3>{academyName || "Sin nombre"}</h3><dl><div><dt>Tipo</dt><dd>{organizationType}</dd></div><div><dt>Owner</dt><dd>{ownerName}</dd></div><div><dt>Correo</dt><dd>{ownerEmail}</dd></div><div><dt>Acceso</dt><dd>Privado, por invitación</dd></div></dl></section>
         <section className="summary-block"><p className="eyebrow">Alcance</p><h3>{selectedModules.filter((module) => !module.internal).length} módulos comerciales</h3><div className="module-chips">{selectedModules.filter((module) => !module.internal).map((module) => <span key={module.key}>{module.label}</span>)}</div></section>
         <section className="summary-block"><p className="eyebrow">Reglas</p><h3>{configuredRuleCount} valores configurados</h3><p>Los campos vacíos quedan sin regla. Todos los valores podrán tener vigencia y excepciones cuando exista persistencia.</p></section>
         <section className="summary-block"><p className="eyebrow">Fiscal</p><h3>{arcaEnabled ? "ARCA preparado" : "Sin integración ARCA"}</h3><p>{arcaEnabled ? "El módulo está seleccionado, pero permanece sin credenciales y fuera de producción hasta completar homologación." : "Los cobros usarán comprobantes internos, separados de una factura fiscal."}</p></section>
