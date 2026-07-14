@@ -12,6 +12,7 @@ import {
   type ModuleKey,
 } from "@/lib/modules";
 import { emptyEconomicRules, settlementModeLabels, type EconomicRules } from "@/lib/setup";
+import { DemoDashboard } from "@/components/demo-dashboard";
 
 const categories: ModuleCategory[] = ["operacion", "administracion", "servicios", "fiscal"];
 const stepLabels = ["Identidad", "Módulos", "Reglas económicas", "Owner y acceso", "Confirmación"];
@@ -26,6 +27,7 @@ export function SetupWizard() {
   const [selected, setSelected] = useState<Set<ModuleKey>>(() => resolveRequiredModules(starterSelection));
   const [lastMessage, setLastMessage] = useState("Configuración base cargada. Podés adaptarla antes de continuar.");
   const [validated, setValidated] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(false);
 
   const requiredBySelection = useMemo(() => {
     const required = new Set<ModuleKey>();
@@ -74,6 +76,17 @@ export function SetupWizard() {
       addedDependencies.length > 0
         ? `${moduleMap.get(key)?.label} activó también: ${addedDependencies.map((item) => moduleMap.get(item)?.label).join(", ")}.`
         : `${moduleMap.get(key)?.label} quedó activado.`,
+    );
+  }
+
+  if (showDashboard) {
+    return (
+      <DemoDashboard
+        academyName={academyName}
+        ownerName={ownerName}
+        selectedModules={selectedModules}
+        onBackToSetup={() => setShowDashboard(false)}
+      />
     );
   }
 
@@ -167,8 +180,8 @@ export function SetupWizard() {
               </button>
             )}
             {step === 5 && (
-              <button type="button" className="primary-action" onClick={() => setValidated(true)}>
-                Validar configuración demo
+              <button type="button" className="primary-action" onClick={() => validated ? setShowDashboard(true) : setValidated(true)}>
+                {validated ? "Ingresar al panel demo" : "Confirmar configuración"}
               </button>
             )}
           </div>
@@ -337,25 +350,19 @@ interface OwnerStepProps {
 function OwnerStep({ ownerName, ownerEmail, setOwnerName, setOwnerEmail }: OwnerStepProps) {
   return (
     <>
-      <PageHeader step="Paso 4 de 5" title="Definí al owner de la instalación" description="Este usuario será el único responsable inicial. La invitación real se implementará cuando exista el Supabase del cliente." />
+      <PageHeader step="Paso 4 de 5" title="Definí al responsable principal" description="Esta persona administrará la configuración y los accesos del equipo." />
       <div className="owner-layout">
         <section className="form-section owner-form">
-          <div className="section-copy"><h3>Datos de acceso</h3><p>No se genera ni almacena una contraseña en esta demo.</p></div>
+          <div className="section-copy"><h3>Datos de acceso</h3><p>La contraseña se configura de manera privada al activar la instalación.</p></div>
           <label className="form-field wide-field"><span>Nombre completo</span><input value={ownerName} onChange={(event) => setOwnerName(event.target.value)} placeholder="Responsable de la academia" /></label>
-          <label className="form-field wide-field"><span>Correo del owner</span><input type="email" value={ownerEmail} onChange={(event) => setOwnerEmail(event.target.value)} placeholder="owner@academia.com" /></label>
-          <div className="system-message compact"><span aria-hidden="true">i</span>En producción recibirá un enlace para configurar su contraseña. No habrá registro público.</div>
+          <label className="form-field wide-field"><span>Correo del responsable</span><input type="email" value={ownerEmail} onChange={(event) => setOwnerEmail(event.target.value)} placeholder="responsable@academia.com" /></label>
+          <div className="system-message compact"><span aria-hidden="true">i</span>Recibirá una invitación privada para crear su contraseña.</div>
         </section>
         <section className="ownership-panel">
-          <p className="eyebrow">Propiedad del cliente</p>
-          <h3>Una instalación, un responsable</h3>
-          <ul className="check-list">
-            <li><span>✓</span> GitHub del cliente</li>
-            <li><span>✓</span> Supabase del cliente</li>
-            <li><span>✓</span> Vercel del cliente</li>
-            <li><span>✓</span> Dominio del cliente</li>
-            <li><span>✓</span> Soporte con acceso temporal</li>
-          </ul>
-          <p>No se crea un superadmin global ni un acceso oculto para el proveedor.</p>
+          <p className="eyebrow">Tu sistema</p>
+          <h3>Todo queda bajo el control del cliente</h3>
+          <div className="control-symbol" aria-hidden="true">✓</div>
+          <p>La información, los accesos y la configuración pertenecen al cliente.</p>
         </section>
       </div>
     </>
@@ -377,15 +384,15 @@ function ConfirmationStep({ academyName, organizationType, ownerName, ownerEmail
   const arcaEnabled = selectedModules.some((module) => module.key === "arca");
   return (
     <>
-      <PageHeader step="Paso 5 de 5" title="Revisá la configuración" description="Esta validación es local. No crea usuarios, infraestructura ni registros externos." />
-      {validated && <div className="success-message" role="status"><span aria-hidden="true">✓</span><div><strong>Configuración demo validada</strong><p>La próxima etapa podrá usar esta base para construir el panel administrativo.</p></div></div>}
+      <PageHeader step="Paso 5 de 5" title="Revisá la configuración" description="Confirmá que la información sea correcta antes de ingresar al panel." />
+      {validated && <div className="success-message" role="status"><span aria-hidden="true">✓</span><div><strong>Todo quedó configurado</strong><p>El cliente tendrá el control total de su sistema.</p></div></div>}
       <div className="confirmation-grid">
         <section className="summary-block"><p className="eyebrow">Instalación</p><h3>{academyName || "Sin nombre"}</h3><dl><div><dt>Tipo</dt><dd>{organizationType}</dd></div><div><dt>Owner</dt><dd>{ownerName}</dd></div><div><dt>Correo</dt><dd>{ownerEmail}</dd></div><div><dt>Acceso</dt><dd>Privado, por invitación</dd></div></dl></section>
         <section className="summary-block"><p className="eyebrow">Alcance</p><h3>{selectedModules.filter((module) => !module.internal).length} módulos comerciales</h3><div className="module-chips">{selectedModules.filter((module) => !module.internal).map((module) => <span key={module.key}>{module.label}</span>)}</div></section>
         <section className="summary-block"><p className="eyebrow">Reglas</p><h3>{configuredRuleCount} valores configurados</h3><p>Los campos vacíos quedan sin regla. Todos los valores podrán tener vigencia y excepciones cuando exista persistencia.</p></section>
         <section className="summary-block"><p className="eyebrow">Fiscal</p><h3>{arcaEnabled ? "ARCA preparado" : "Sin integración ARCA"}</h3><p>{arcaEnabled ? "El módulo está seleccionado, pero permanece sin credenciales y fuera de producción hasta completar homologación." : "Los cobros usarán comprobantes internos, separados de una factura fiscal."}</p></section>
       </div>
-      <div className="handoff-note"><strong>Sin efectos externos</strong><span>No se envió ninguna invitación ni se conectaron Supabase, Vercel, DNS o ARCA.</span></div>
+      <div className="handoff-note"><strong>Demostración segura</strong><span>Podés recorrer el panel sin modificar información real.</span></div>
     </>
   );
 }
