@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import type { ModuleKey, ProductModule } from "@/lib/modules";
 
 type DashboardSection = "home" | ModuleKey;
@@ -14,127 +15,173 @@ interface DemoDashboardProps {
 
 interface TableDemo {
   headers: [string, string, string];
-  rows: Array<{ primary: string; secondary: string; status: string; tone: "ok" | "review" | "info" }>;
+  rows: DemoRecord[];
   action: string;
   search: string;
+}
+
+interface DemoRecord {
+  id: string;
+  primary: string;
+  secondary: string;
+  status: string;
+  tone: "ok" | "review" | "info";
+}
+
+type DemoRecordsByModule = Partial<Record<ModuleKey, DemoRecord[]>>;
+
+const storageKey = "danza-y-gym-demo-records-v1";
+
+function record(id: string, primary: string, secondary: string, status: string, tone: DemoRecord["tone"]): DemoRecord {
+  return { id, primary, secondary, status, tone };
 }
 
 const tableDemos: Partial<Record<ModuleKey, TableDemo>> = {
   students: {
     headers: ["Alumno", "Inscripción", "Estado"], action: "Nuevo alumno", search: "Buscar por nombre, DNI o clase",
     rows: [
-      { primary: "Martina López", secondary: "Danza contemporánea", status: "Al día", tone: "ok" },
-      { primary: "Sofía Benítez", secondary: "Clásico inicial", status: "Cuota pendiente", tone: "review" },
-      { primary: "Tomás García", secondary: "Entrenamiento funcional", status: "Al día", tone: "ok" },
-      { primary: "Valentina Ruiz", secondary: "Jazz intermedio", status: "Revisar ficha", tone: "review" },
+      record("student-1", "Martina López", "Danza contemporánea", "Al día", "ok"),
+      record("student-2", "Sofía Benítez", "Clásico inicial", "Cuota pendiente", "review"),
+      record("student-3", "Tomás García", "Entrenamiento funcional", "Al día", "ok"),
+      record("student-4", "Valentina Ruiz", "Jazz intermedio", "Revisar ficha", "review"),
     ],
   },
   teachers: {
     headers: ["Profesor", "Clases asignadas", "Disponibilidad"], action: "Nuevo profesor", search: "Buscar profesor o disciplina",
     rows: [
-      { primary: "Carolina Méndez", secondary: "Clásico inicial · Sala A", status: "Lun y mié", tone: "info" },
-      { primary: "Diego Fernández", secondary: "Entrenamiento funcional", status: "Mar y jue", tone: "info" },
-      { primary: "Lucía Romero", secondary: "Jazz intermedio · Taller coreográfico", status: "3 clases", tone: "ok" },
-      { primary: "Julián Acosta", secondary: "Danza contemporánea", status: "Reemplazo", tone: "review" },
+      record("teacher-1", "Carolina Méndez", "Clásico inicial · Sala A", "Lun y mié", "info"),
+      record("teacher-2", "Diego Fernández", "Entrenamiento funcional", "Mar y jue", "info"),
+      record("teacher-3", "Lucía Romero", "Jazz intermedio · Taller coreográfico", "3 clases", "ok"),
+      record("teacher-4", "Julián Acosta", "Danza contemporánea", "Reemplazo", "review"),
     ],
   },
   rooms: {
     headers: ["Sala", "Capacidad", "Próxima actividad"], action: "Nueva sala", search: "Buscar sala",
     rows: [
-      { primary: "Sala A", secondary: "20 personas · Piso flotante", status: "16:00 Clásico", tone: "info" },
-      { primary: "Sala B", secondary: "24 personas · Espejos", status: "17:30 Jazz", tone: "info" },
-      { primary: "Sala C", secondary: "15 personas · Equipamiento", status: "19:00 Funcional", tone: "info" },
-      { primary: "Sala virtual", secondary: "Acceso por enlace privado", status: "Disponible", tone: "ok" },
+      record("room-1", "Sala A", "20 personas · Piso flotante", "16:00 Clásico", "info"),
+      record("room-2", "Sala B", "24 personas · Espejos", "17:30 Jazz", "info"),
+      record("room-3", "Sala C", "15 personas · Equipamiento", "19:00 Funcional", "info"),
+      record("room-4", "Sala virtual", "Acceso por enlace privado", "Disponible", "ok"),
     ],
   },
   classes: {
     headers: ["Clase", "Grupo", "Cupo"], action: "Nueva clase", search: "Buscar clase, nivel o profesor",
     rows: [
-      { primary: "Clásico inicial", secondary: "Carolina Méndez · Sala A", status: "14 de 20", tone: "ok" },
-      { primary: "Jazz intermedio", secondary: "Lucía Romero · Sala B", status: "18 de 24", tone: "ok" },
-      { primary: "Danza contemporánea", secondary: "Julián Acosta · Sala A", status: "20 de 20", tone: "review" },
-      { primary: "Entrenamiento funcional", secondary: "Diego Fernández · Sala C", status: "12 de 15", tone: "info" },
+      record("class-1", "Clásico inicial", "Carolina Méndez · Sala A", "14 de 20", "ok"),
+      record("class-2", "Jazz intermedio", "Lucía Romero · Sala B", "18 de 24", "ok"),
+      record("class-3", "Danza contemporánea", "Julián Acosta · Sala A", "20 de 20", "review"),
+      record("class-4", "Entrenamiento funcional", "Diego Fernández · Sala C", "12 de 15", "info"),
     ],
   },
   workshops: {
     headers: ["Taller", "Modalidad", "Inscripciones"], action: "Nuevo taller", search: "Buscar taller",
     rows: [
-      { primary: "Composición creativa", secondary: "Sábado · 2 encuentros", status: "16 inscriptos", tone: "ok" },
-      { primary: "Maquillaje escénico", secondary: "Abierto al público", status: "8 lugares", tone: "info" },
-      { primary: "Música y movimiento", secondary: "Obligatorio para formación", status: "Completo", tone: "review" },
+      record("workshop-1", "Composición creativa", "Sábado · 2 encuentros", "16 inscriptos", "ok"),
+      record("workshop-2", "Maquillaje escénico", "Abierto al público", "8 lugares", "info"),
+      record("workshop-3", "Música y movimiento", "Obligatorio para formación", "Completo", "review"),
     ],
   },
   formations: {
     headers: ["Formación", "Trayecto", "Alumnos"], action: "Nueva formación", search: "Buscar formación o año",
     rows: [
-      { primary: "Formación en Jazz", secondary: "Primer año · 6 materias", status: "18 alumnos", tone: "ok" },
-      { primary: "Formación Clásica", secondary: "Segundo año · 7 materias", status: "14 alumnos", tone: "ok" },
-      { primary: "Danzas españolas", secondary: "Primer año · 5 materias", status: "9 alumnos", tone: "info" },
+      record("formation-1", "Formación en Jazz", "Primer año · 6 materias", "18 alumnos", "ok"),
+      record("formation-2", "Formación Clásica", "Segundo año · 7 materias", "14 alumnos", "ok"),
+      record("formation-3", "Danzas españolas", "Primer año · 5 materias", "9 alumnos", "info"),
     ],
   },
   attendance: {
     headers: ["Clase de hoy", "Presentes", "Registro"], action: "Tomar asistencia", search: "Buscar clase o alumno",
     rows: [
-      { primary: "Clásico inicial · 16:00", secondary: "13 de 14 presentes", status: "Completa", tone: "ok" },
-      { primary: "Jazz intermedio · 17:30", secondary: "0 de 18 presentes", status: "Pendiente", tone: "review" },
-      { primary: "Funcional · 19:00", secondary: "0 de 12 presentes", status: "Más tarde", tone: "info" },
+      record("attendance-1", "Clásico inicial · 16:00", "13 de 14 presentes", "Completa", "ok"),
+      record("attendance-2", "Jazz intermedio · 17:30", "0 de 18 presentes", "Pendiente", "review"),
+      record("attendance-3", "Funcional · 19:00", "0 de 12 presentes", "Más tarde", "info"),
     ],
   },
   fees: {
     headers: ["Responsable", "Período", "Saldo"], action: "Registrar cobro", search: "Buscar alumno, responsable o período",
     rows: [
-      { primary: "Familia Benítez", secondary: "Julio · Venció el 15/07", status: "$ 38.500", tone: "review" },
-      { primary: "Martina López", secondary: "Julio · Transferencia", status: "Pagada", tone: "ok" },
-      { primary: "Valentina Ruiz", secondary: "Julio · Pago parcial", status: "$ 12.000", tone: "info" },
-      { primary: "Tomás García", secondary: "Agosto · Próximo período", status: "Sin emitir", tone: "info" },
+      record("fee-1", "Familia Benítez", "Julio · Venció el 15/07", "$ 38.500", "review"),
+      record("fee-2", "Martina López", "Julio · Transferencia", "Pagada", "ok"),
+      record("fee-3", "Valentina Ruiz", "Julio · Pago parcial", "$ 12.000", "info"),
+      record("fee-4", "Tomás García", "Agosto · Próximo período", "Sin emitir", "info"),
     ],
   },
   cash: {
     headers: ["Movimiento", "Medio", "Importe"], action: "Nuevo movimiento", search: "Buscar concepto o comprobante",
     rows: [
-      { primary: "Cuota Martina López", secondary: "Transferencia · 15:42", status: "+ $ 42.000", tone: "ok" },
-      { primary: "Cuota Tomás García", secondary: "Efectivo · 14:18", status: "+ $ 38.500", tone: "ok" },
-      { primary: "Compra de insumos", secondary: "Efectivo · 12:05", status: "- $ 16.800", tone: "review" },
-      { primary: "Apertura de caja", secondary: "Fondo inicial · 09:00", status: "$ 50.000", tone: "info" },
+      record("cash-1", "Cuota Martina López", "Transferencia · 15:42", "+ $ 42.000", "ok"),
+      record("cash-2", "Cuota Tomás García", "Efectivo · 14:18", "+ $ 38.500", "ok"),
+      record("cash-3", "Compra de insumos", "Efectivo · 12:05", "- $ 16.800", "review"),
+      record("cash-4", "Apertura de caja", "Fondo inicial · 09:00", "$ 50.000", "info"),
     ],
   },
   scholarships: {
     headers: ["Alumno", "Beneficio", "Vigencia"], action: "Nueva beca", search: "Buscar alumno o tipo de beca",
     rows: [
-      { primary: "Camila Torres", secondary: "Beca completa", status: "Hasta diciembre", tone: "ok" },
-      { primary: "Nicolás Vega", secondary: "Media beca", status: "Revisar en agosto", tone: "info" },
-      { primary: "Abril Sosa", secondary: "Beca por mérito", status: "Último cuatrimestre", tone: "ok" },
+      record("scholarship-1", "Camila Torres", "Beca completa", "Hasta diciembre", "ok"),
+      record("scholarship-2", "Nicolás Vega", "Media beca", "Revisar en agosto", "info"),
+      record("scholarship-3", "Abril Sosa", "Beca por mérito", "Último cuatrimestre", "ok"),
     ],
   },
   teacherSettlements: {
     headers: ["Profesor", "Período", "Liquidación"], action: "Preparar liquidación", search: "Buscar profesor o período",
     rows: [
-      { primary: "Carolina Méndez", secondary: "Julio · 42 alumnos", status: "A revisar", tone: "review" },
-      { primary: "Diego Fernández", secondary: "Julio · 18 horas", status: "$ 324.000", tone: "info" },
-      { primary: "Lucía Romero", secondary: "Junio · Transferencia", status: "Pagada", tone: "ok" },
+      record("settlement-1", "Carolina Méndez", "Julio · 42 alumnos", "A revisar", "review"),
+      record("settlement-2", "Diego Fernández", "Julio · 18 horas", "$ 324.000", "info"),
+      record("settlement-3", "Lucía Romero", "Junio · Transferencia", "Pagada", "ok"),
     ],
   },
   additionalSales: {
     headers: ["Pedido", "Cliente", "Estado"], action: "Nueva venta", search: "Buscar pedido, producto o cliente",
     rows: [
-      { primary: "Zapatos de jazz · Talle 37", secondary: "Martina López", status: "Entregado", tone: "ok" },
-      { primary: "Medias de danza · Talle M", secondary: "Sofía Benítez", status: "Reservado", tone: "info" },
-      { primary: "Zapatos clásicos · Talle 35", secondary: "Valentina Ruiz", status: "A pedir", tone: "review" },
+      record("sale-1", "Zapatos de jazz · Talle 37", "Martina López", "Entregado", "ok"),
+      record("sale-2", "Medias de danza · Talle M", "Sofía Benítez", "Reservado", "info"),
+      record("sale-3", "Zapatos clásicos · Talle 35", "Valentina Ruiz", "A pedir", "review"),
     ],
   },
   arca: {
     headers: ["Comprobante", "Receptor", "Estado fiscal"], action: "Nuevo borrador", search: "Buscar comprobante o receptor",
     rows: [
-      { primary: "Borrador B 0001-00000124", secondary: "Consumidor final", status: "Sin enviar", tone: "info" },
-      { primary: "Configuración fiscal", secondary: "Credenciales no cargadas", status: "Desactivado", tone: "review" },
+      record("arca-1", "Borrador B 0001-00000124", "Consumidor final", "Sin enviar", "info"),
+      record("arca-2", "Configuración fiscal", "Credenciales no cargadas", "Desactivado", "review"),
     ],
   },
 };
 
+function createSeedRecords(): DemoRecordsByModule {
+  return Object.fromEntries(Object.entries(tableDemos).map(([key, demo]) => [key, demo?.rows.map((item) => ({ ...item })) ?? []])) as DemoRecordsByModule;
+}
+
+function loadDemoRecords(): DemoRecordsByModule {
+  if (typeof window === "undefined") return createSeedRecords();
+  try {
+    const saved = window.localStorage.getItem(storageKey);
+    return saved ? JSON.parse(saved) as DemoRecordsByModule : createSeedRecords();
+  } catch {
+    return createSeedRecords();
+  }
+}
+
 export function DemoDashboard({ academyName, ownerName, selectedModules, onBackToSetup }: DemoDashboardProps) {
   const [activeSection, setActiveSection] = useState<DashboardSection>("home");
+  const [recordsByModule, setRecordsByModule] = useState<DemoRecordsByModule>(loadDemoRecords);
+  const [confirmReset, setConfirmReset] = useState(false);
   const visibleModules = selectedModules.filter((module) => !module.internal);
   const activeModule = visibleModules.find((module) => module.key === activeSection);
+
+  useEffect(() => {
+    window.localStorage.setItem(storageKey, JSON.stringify(recordsByModule));
+  }, [recordsByModule]);
+
+  function addRecord(moduleKey: ModuleKey, newRecord: DemoRecord) {
+    setRecordsByModule((current) => ({ ...current, [moduleKey]: [...(current[moduleKey] ?? []), newRecord] }));
+  }
+
+  function resetDemo() {
+    setRecordsByModule(createSeedRecords());
+    setConfirmReset(false);
+    setActiveSection("home");
+  }
 
   return (
     <main className="dashboard-shell">
@@ -169,12 +216,15 @@ export function DemoDashboard({ academyName, ownerName, selectedModules, onBackT
             <p>{activeModule?.description ?? "Información importante para organizar la jornada."}</p>
           </div>
           <div className="topbar-actions">
-            <span className="demo-badge">Datos de muestra</span>
+            <span className="demo-badge">Guardado en este navegador</span>
+            <button type="button" className="secondary-action" onClick={() => setConfirmReset(true)}>Restablecer demo</button>
             <button type="button" className="secondary-action" onClick={onBackToSetup}>Configuración</button>
           </div>
         </header>
 
-        {activeSection === "home" ? <DashboardHome /> : <ModuleDemo module={activeModule} />}
+        {confirmReset && <section className="reset-strip" role="alert"><div><strong>¿Restablecer los datos de muestra?</strong><span>Se descartarán únicamente los cambios hechos en este navegador.</span></div><div><button type="button" onClick={() => setConfirmReset(false)}>Cancelar</button><button type="button" className="danger-action" onClick={resetDemo}>Sí, restablecer</button></div></section>}
+
+        {activeSection === "home" ? <DashboardHome /> : <ModuleDemo module={activeModule} records={activeModule ? recordsByModule[activeModule.key] : undefined} onAdd={addRecord} />}
       </section>
     </main>
   );
@@ -213,7 +263,7 @@ function DashboardHome() {
   );
 }
 
-function ModuleDemo({ module }: { module?: ProductModule }) {
+function ModuleDemo({ module, records, onAdd }: { module?: ProductModule; records?: DemoRecord[]; onAdd: (moduleKey: ModuleKey, record: DemoRecord) => void }) {
   if (!module) return null;
   if (module.key === "schedule") return <ScheduleDemo />;
   if (module.key === "reports") return <ReportsDemo />;
@@ -223,18 +273,49 @@ function ModuleDemo({ module }: { module?: ProductModule }) {
   if (!demo) return <ModuleEmptyState module={module} />;
 
   return (
+    <TableModuleDemo module={module} demo={demo} records={records ?? demo.rows} onAdd={onAdd} />
+  );
+}
+
+function TableModuleDemo({ module, demo, records, onAdd }: { module: ProductModule; demo: TableDemo; records: DemoRecord[]; onAdd: (moduleKey: ModuleKey, record: DemoRecord) => void }) {
+  const [query, setQuery] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [draft, setDraft] = useState({ primary: "", secondary: "", status: "" });
+  const filteredRecords = useMemo(() => {
+    const normalized = query.trim().toLocaleLowerCase("es");
+    if (!normalized) return records;
+    return records.filter((item) => `${item.primary} ${item.secondary} ${item.status}`.toLocaleLowerCase("es").includes(normalized));
+  }, [query, records]);
+
+  function submitRecord(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!draft.primary.trim() || !draft.secondary.trim() || !draft.status.trim()) return;
+    onAdd(module.key, record(`${module.key}-${Date.now()}`, draft.primary.trim(), draft.secondary.trim(), draft.status.trim(), "info"));
+    setDraft({ primary: "", secondary: "", status: "" });
+    setIsAdding(false);
+  }
+
+  return (
     <div className="dashboard-body">
       <section className="module-toolbar">
-        <label><span>Buscar</span><input type="search" placeholder={demo.search} /></label>
-        <button type="button" className="primary-action">{demo.action}</button>
+        <label><span>Buscar</span><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={demo.search} /></label>
+        <button type="button" className="primary-action" onClick={() => setIsAdding((current) => !current)}>{isAdding ? "Cancelar" : demo.action}</button>
       </section>
+      {isAdding && <form className="quick-entry" onSubmit={submitRecord}>
+        <div><p className="eyebrow">Carga de demostración</p><h2>Agregar en {module.label.toLowerCase()}</h2></div>
+        <label><span>{demo.headers[0]}</span><input value={draft.primary} onChange={(event) => setDraft((current) => ({ ...current, primary: event.target.value }))} required /></label>
+        <label><span>{demo.headers[1]}</span><input value={draft.secondary} onChange={(event) => setDraft((current) => ({ ...current, secondary: event.target.value }))} required /></label>
+        <label><span>{demo.headers[2]}</span><input value={draft.status} onChange={(event) => setDraft((current) => ({ ...current, status: event.target.value }))} required /></label>
+        <button type="submit" className="primary-action">Guardar</button>
+      </form>}
       <section className="demo-table" aria-label={`Vista demo de ${module.label}`}>
         <div className="table-heading"><span>{demo.headers[0]}</span><span>{demo.headers[1]}</span><span>{demo.headers[2]}</span></div>
-        {demo.rows.map((row) => (
-          <div className="table-row" key={`${row.primary}-${row.secondary}`}>
+        {filteredRecords.map((row) => (
+          <div className="table-row" key={row.id}>
             <strong>{row.primary}</strong><span>{row.secondary}</span><b className={`status-${row.tone}`}>{row.status}</b>
           </div>
         ))}
+        {filteredRecords.length === 0 && <div className="table-empty"><strong>No encontramos resultados.</strong><span>Probá con otra búsqueda o agregá un registro de demostración.</span></div>}
       </section>
       <DemoExplanation />
     </div>
