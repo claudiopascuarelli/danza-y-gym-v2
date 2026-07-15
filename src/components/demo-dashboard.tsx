@@ -323,18 +323,94 @@ function TableModuleDemo({ module, demo, records, onAdd }: { module: ProductModu
 }
 
 function ScheduleDemo() {
-  const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"];
-  const schedule = [
-    ["16:00", "Clásico inicial", "Sala A", "Carolina"],
-    ["17:30", "Jazz intermedio", "Sala B", "Lucía"],
-    ["19:00", "Funcional", "Sala C", "Diego"],
+  type ScheduleView = "day" | "week" | "month";
+  type ScheduleEvent = {
+    id: string;
+    date: number;
+    day: string;
+    time: string;
+    title: string;
+    room: string;
+    teacher: string;
+    kind: "Clase regular" | "Seminario" | "Práctica";
+    enrolled: number;
+    capacity: number;
+    status: string;
+    tone: "regular" | "special" | "full" | "changed";
+  };
+
+  const [view, setView] = useState<ScheduleView>("week");
+  const [selectedDay, setSelectedDay] = useState("Miércoles");
+  const [roomFilter, setRoomFilter] = useState("Todas las salas");
+  const [kindFilter, setKindFilter] = useState("Todas las actividades");
+  const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  const events: ScheduleEvent[] = [
+    { id: "mon-1", date: 13, day: "Lunes", time: "16:00", title: "Clásico inicial", room: "Sala A", teacher: "Carolina Méndez", kind: "Clase regular", enrolled: 14, capacity: 20, status: "6 lugares", tone: "regular" },
+    { id: "mon-2", date: 13, day: "Lunes", time: "19:00", title: "Práctica de tango", room: "Sala B", teacher: "Santiago León", kind: "Práctica", enrolled: 22, capacity: 24, status: "Reserva previa", tone: "special" },
+    { id: "tue-1", date: 14, day: "Martes", time: "17:30", title: "Jazz intermedio", room: "Sala B", teacher: "Lucía Romero", kind: "Clase regular", enrolled: 18, capacity: 24, status: "6 lugares", tone: "regular" },
+    { id: "tue-2", date: 14, day: "Martes", time: "19:45", title: "Figuras para la milonga", room: "Sala A", teacher: "Gisela Terella", kind: "Seminario", enrolled: 20, capacity: 20, status: "Completo", tone: "full" },
+    { id: "wed-1", date: 15, day: "Miércoles", time: "16:00", title: "Danza contemporánea", room: "Sala A", teacher: "Julián Acosta", kind: "Clase regular", enrolled: 20, capacity: 20, status: "Completo", tone: "full" },
+    { id: "wed-2", date: 15, day: "Miércoles", time: "18:30", title: "Tango estilo pista", room: "Sala C", teacher: "Orlando y Paula", kind: "Seminario", enrolled: 12, capacity: 15, status: "Reserva previa", tone: "special" },
+    { id: "thu-1", date: 16, day: "Jueves", time: "18:00", title: "Entrenamiento funcional", room: "Sala C", teacher: "Diego Fernández", kind: "Clase regular", enrolled: 12, capacity: 15, status: "3 lugares", tone: "regular" },
+    { id: "thu-2", date: 16, day: "Jueves", time: "19:30", title: "Tango y milonga", room: "Sala B", teacher: "Valeria Iñarra", kind: "Clase regular", enrolled: 16, capacity: 24, status: "Profesor reemplazante", tone: "changed" },
+    { id: "fri-1", date: 17, day: "Viernes", time: "18:30", title: "La previa", room: "Sala A", teacher: "Santiago y Florencia", kind: "Práctica", enrolled: 19, capacity: 20, status: "Último lugar", tone: "special" },
+    { id: "sat-1", date: 18, day: "Sábado", time: "12:00", title: "Técnica para los dos roles", room: "Sala A", teacher: "Claudia Codega", kind: "Seminario", enrolled: 17, capacity: 20, status: "3 lugares", tone: "special" },
+    { id: "sat-2", date: 18, day: "Sábado", time: "15:00", title: "Giros, sacadas y barridas", room: "Sala B", teacher: "Orlando y Paula", kind: "Seminario", enrolled: 24, capacity: 24, status: "Lista de espera", tone: "full" },
   ];
+  const filteredEvents = events.filter((event) => (roomFilter === "Todas las salas" || event.room === roomFilter) && (kindFilter === "Todas las actividades" || event.kind === kindFilter));
+  const monthHighlights: Record<number, { label: string; tone: ScheduleEvent["tone"] }[]> = {
+    13: [{ label: "Práctica 19:00", tone: "special" }],
+    14: [{ label: "Seminario 19:45", tone: "special" }],
+    15: [{ label: "Tango pista 18:30", tone: "special" }],
+    17: [{ label: "La previa 18:30", tone: "special" }],
+    18: [{ label: "3 seminarios", tone: "full" }],
+    20: [{ label: "Grilla regular", tone: "regular" }],
+    25: [{ label: "Taller intensivo", tone: "changed" }],
+  };
+  const monthCells = [...Array(2).fill(null), ...Array.from({ length: 31 }, (_, index) => index + 1), ...Array(2).fill(null)];
+
+  function EventCard({ event, compact = false }: { event: ScheduleEvent; compact?: boolean }) {
+    return <article className={`schedule-event event-${event.tone} ${compact ? "compact-event" : ""}`}>
+      <div className="event-time"><time>{event.time}</time><span>{event.kind}</span></div>
+      <strong>{event.title}</strong>
+      <span>{event.room} · {event.teacher}</span>
+      {!compact && <div className="event-capacity"><span><b style={{ width: `${Math.min(100, (event.enrolled / event.capacity) * 100)}%` }} /></span><small>{event.enrolled}/{event.capacity}</small></div>}
+      <em>{event.status}</em>
+    </article>;
+  }
+
   return (
-    <div className="dashboard-body">
-      <section className="schedule-toolbar"><strong>Semana del 13 al 17 de julio</strong><button type="button" className="primary-action">Nueva clase</button></section>
-      <section className="week-grid" aria-label="Grilla horaria de muestra">
-        {days.map((day) => <div className="day-column" key={day}><h2>{day}</h2>{schedule.map((item) => <article key={`${day}-${item[0]}`}><time>{item[0]}</time><strong>{item[1]}</strong><span>{item[2]} · {item[3]}</span></article>)}</div>)}
+    <div className="dashboard-body schedule-demo">
+      <section className="calendar-commandbar" aria-label="Controles de la grilla">
+        <div className="calendar-period"><button type="button" aria-label="Período anterior">←</button><div><strong>13 al 18 de julio</strong><span>Invierno 2026</span></div><button type="button" aria-label="Período siguiente">→</button></div>
+        <div className="view-switcher" aria-label="Vista del calendario">
+          {(["day", "week", "month"] as ScheduleView[]).map((option) => <button type="button" aria-pressed={view === option} className={view === option ? "active" : ""} key={option} onClick={() => setView(option)}>{option === "day" ? "Día" : option === "week" ? "Semana" : "Mes"}</button>)}
+        </div>
+        <button type="button" className="primary-action">Nueva actividad</button>
       </section>
+
+      <section className="calendar-filters" aria-label="Filtros de la grilla">
+        <div><strong>{filteredEvents.length} actividades visibles</strong><span>3 salas · 8 profesores</span></div>
+        <label><span>Sala</span><select value={roomFilter} onChange={(event) => setRoomFilter(event.target.value)}><option>Todas las salas</option><option>Sala A</option><option>Sala B</option><option>Sala C</option></select></label>
+        <label><span>Actividad</span><select value={kindFilter} onChange={(event) => setKindFilter(event.target.value)}><option>Todas las actividades</option><option>Clase regular</option><option>Seminario</option><option>Práctica</option></select></label>
+        <div className="calendar-legend" aria-label="Referencias"><span><i className="legend-regular" />Regular</span><span><i className="legend-special" />Especial</span><span><i className="legend-full" />Completa</span></div>
+      </section>
+
+      {view === "day" && <section className="day-view" aria-label="Agenda diaria de muestra">
+        <nav className="day-selector" aria-label="Seleccionar día">{days.map((day, index) => <button type="button" className={selectedDay === day ? "active" : ""} aria-pressed={selectedDay === day} onClick={() => setSelectedDay(day)} key={day}><span>{day.slice(0, 3)}</span><strong>{13 + index}</strong></button>)}</nav>
+        <div className="day-agenda"><header><div><p className="eyebrow">Agenda del día</p><h2>{selectedDay} {13 + days.indexOf(selectedDay)} de julio</h2></div><span>{filteredEvents.filter((event) => event.day === selectedDay).length} actividades</span></header>{filteredEvents.filter((event) => event.day === selectedDay).map((event) => <EventCard event={event} key={event.id} />)}{filteredEvents.filter((event) => event.day === selectedDay).length === 0 && <div className="calendar-empty"><strong>No hay actividades con estos filtros.</strong><span>Probá mostrando todas las salas y actividades.</span></div>}</div>
+      </section>}
+
+      {view === "week" && <section className="week-grid" aria-label="Grilla semanal de muestra">
+        {days.map((day, index) => <div className="day-column" key={day}><header><div><h2>{day}</h2><span>{13 + index} JUL</span></div><b>{filteredEvents.filter((event) => event.day === day).length}</b></header>{filteredEvents.filter((event) => event.day === day).map((event) => <EventCard compact event={event} key={event.id} />)}{filteredEvents.filter((event) => event.day === day).length === 0 && <p>Sin actividades</p>}</div>)}
+      </section>}
+
+      {view === "month" && <section className="month-view" aria-label="Calendario mensual de muestra">
+        <div className="month-weekdays">{["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"].map((day) => <span key={day}>{day}</span>)}</div>
+        <div className="month-grid">{monthCells.map((date, index) => <div className={`month-day ${date === 15 ? "today" : ""} ${date === null ? "empty" : ""}`} key={`${date ?? "empty"}-${index}`}>{date && <><time>{date}</time>{monthHighlights[date]?.map((item) => <span className={`month-event event-${item.tone}`} key={item.label}>{item.label}</span>)}</>}</div>)}</div>
+      </section>}
+
+      <section className="calendar-summary" aria-label="Resumen de ocupación"><div><span>Ocupación semanal</span><strong>82%</strong></div><div><span>Reservas previas</span><strong>41</strong></div><div><span>Listas de espera</span><strong>2</strong></div><p>La demo representa clases regulares, seminarios y prácticas. Los cambios se muestran visualmente antes de operar con datos reales.</p></section>
       <DemoExplanation />
     </div>
   );

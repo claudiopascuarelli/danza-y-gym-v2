@@ -24,7 +24,10 @@
 - Actividades y categorías configurables.
 - Profesores, niveles, capacidad y edades.
 - Salas configurables.
-- Grilla semanal con detección de superposiciones.
+- Grilla visual Día, Semana y Mes con filtros por sala, profesor y actividad.
+- Detección de superposiciones de sala y profesor.
+- Reservas, cupos y listas de espera configurables.
+- Reglas detalladas en [GRILLA_Y_RESERVAS.md](GRILLA_Y_RESERVAS.md).
 
 ## Formaciones
 
