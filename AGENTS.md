@@ -40,6 +40,26 @@ Leer este archivo antes de analizar, modificar, probar o desplegar.
 - Separar comprobantes internos de facturación fiscal.
 - No guardar certificados o claves fiscales en frontend ni GitHub.
 
+## Evaluación objetiva de ideas
+
+Analizar propuestas estratégicas, comerciales, funcionales o técnicas con la técnica de los seis sombreros:
+
+1. Blanco: hechos, evidencia disponible y datos faltantes.
+2. Rojo: intuición, percepción y reacción probable de usuarios o clientes.
+3. Negro: riesgos, límites y motivos para no avanzar.
+4. Amarillo: beneficios y oportunidades posibles.
+5. Verde: alternativas, simplificaciones y experimentos.
+6. Azul: síntesis, recomendación y próximo paso verificable.
+
+Reglas de objetividad:
+
+- Separar hechos, inferencias, supuestos y opiniones.
+- Verificar afirmaciones inestables o técnicas con fuentes primarias cuando corresponda.
+- Indicar nivel de confianza alto, medio o bajo.
+- No validar una idea por afinidad con el usuario.
+- Recomendar modificar, postergar o descartar una propuesta cuando la evidencia lo justifique.
+- Priorizar pruebas pequeñas y reversibles antes de inversiones o desarrollos amplios.
+
 ## Prohibido sin aprobación
 
 - Crear o conectar Supabase.
