@@ -44,6 +44,26 @@ button { color: inherit; }
   background: var(--sidebar);
 }
 
+.provider-brand {
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+}
+
+.provider-brand img {
+  width: 178px;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+}
+
+.provider-brand span {
+  color: oklch(78% 0.03 235);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
 .brand-mark {
   width: 52px;
   height: 52px;
@@ -83,6 +103,38 @@ button { color: inherit; }
 .ownership-note span { color: oklch(80% 0.025 235); font-size: 12px; line-height: 1.5; }
 
 .setup-content { min-width: 0; padding: 48px clamp(24px, 5vw, 76px) 34px; }
+.demo-notice {
+  max-width: 1180px;
+  margin: 0 auto 30px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 18px;
+  padding: 20px 22px;
+  border: 1px solid oklch(78% 0.08 238);
+  border-radius: 13px;
+  background: oklch(93.5% 0.04 235);
+  color: var(--ink);
+}
+
+.demo-notice-label {
+  padding: 7px 10px;
+  border-radius: 7px;
+  background: var(--accent-strong);
+  color: oklch(98% 0.01 235);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.demo-notice div {
+  display: grid;
+  gap: 4px;
+}
+
+.demo-notice strong { font-size: 17px; }
+.demo-notice p { max-width: 70ch; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .content-header { display: flex; align-items: end; justify-content: space-between; gap: 32px; max-width: 1180px; margin: 0 auto 26px; }
 .content-header h2 { margin: 0; font-size: clamp(28px, 4vw, 42px); line-height: 1.1; letter-spacing: -.045em; }
 .content-header p:not(.eyebrow) { max-width: 66ch; color: var(--muted); line-height: 1.55; }
@@ -419,6 +471,8 @@ button { color: inherit; }
 
 @media (max-width: 680px) {
   .setup-content { padding-inline: 16px; }
+  .demo-notice { grid-template-columns: 1fr; gap: 12px; padding: 18px; }
+  .demo-notice-label { justify-self: start; }
   .module-groups { grid-template-columns: 1fr; }
   .form-section { grid-template-columns: 1fr; gap: 20px; }
   .fields-grid, .confirmation-grid { grid-template-columns: 1fr; }

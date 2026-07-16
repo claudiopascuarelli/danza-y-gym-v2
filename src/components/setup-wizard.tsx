@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import {
   categoryLabels,
@@ -21,8 +22,8 @@ export function SetupWizard() {
   const [step, setStep] = useState(1);
   const [academyName, setAcademyName] = useState("Mi academia");
   const [organizationType, setOrganizationType] = useState("Academia de danza");
-  const [ownerName, setOwnerName] = useState("");
-  const [ownerEmail, setOwnerEmail] = useState("");
+  const [ownerName, setOwnerName] = useState("Mi Nombre");
+  const [ownerEmail, setOwnerEmail] = useState("minombre@gmail.com");
   const [rules, setRules] = useState<EconomicRules>(emptyEconomicRules);
   const [selected, setSelected] = useState<Set<ModuleKey>>(() => resolveRequiredModules(starterSelection));
   const [lastMessage, setLastMessage] = useState("Configuración base cargada. Podés adaptarla antes de continuar.");
@@ -93,7 +94,10 @@ export function SetupWizard() {
   return (
     <main className="setup-shell">
       <aside className="setup-sidebar">
-        <div className="brand-mark" aria-hidden="true">DG</div>
+        <div className="provider-brand">
+          <Image src="/logo-aisistema.png" alt="AISistema" width={300} height={86} priority />
+          <span>Implementador de Danza y Gym</span>
+        </div>
         <div>
           <p className="eyebrow">Configuración inicial</p>
           <h1>Danza y Gym</h1>
@@ -118,6 +122,15 @@ export function SetupWizard() {
       </aside>
 
       <section className="setup-content">
+        {step === 1 && (
+          <section className="demo-notice" aria-label="Información sobre la demostración">
+            <span className="demo-notice-label">Modo demo</span>
+            <div>
+              <strong>Estos datos son para una demostración</strong>
+              <p>La información que se muestra o ingresa sirve únicamente para conocer el funcionamiento de Danza y Gym.</p>
+            </div>
+          </section>
+        )}
         {step === 1 && (
           <IdentityStep
             academyName={academyName}
